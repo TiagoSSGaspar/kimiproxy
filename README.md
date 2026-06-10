@@ -144,6 +144,7 @@ Cada provedor tem o seu próprio login persistente. O comando abre um navegador 
 ```bash
 npm run login            # Kimi (perfil em kimi_profile/)
 npm run login:deepseek   # DeepSeek (perfil em profiles/deepseek/)
+npm run login:qwen       # Qwen    (perfil em profiles/qwen/)
 npm run login:mimo       # MiMo    (perfil em profiles/mimo/)
 # Browser específico:
 npm run login:firefox
@@ -163,6 +164,7 @@ O cliente escolhe o backend pelo **prefixo no nome do modelo**:
 | `kimi/k2d6`, `kimi/k2d6-thinking` | Kimi (API replay) |
 | `k2d6`, `k2d6-thinking` (sem prefixo) | Kimi (retrocompatível) |
 | `deepseek/deepseek-chat`, `deepseek/deepseek-reasoner` | DeepSeek (DOM) |
+| `qwen/qwen3-max`, `qwen/qwen-plus` | Qwen (DOM) |
 | `mimo/mimo` | MiMo (DOM) |
 
 `GET /v1/models` lista todos os modelos disponíveis já com prefixo.
