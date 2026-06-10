@@ -3,10 +3,17 @@ version: '3.8'
 services:
   kimiproxy:
     build: .
+    # Bind to localhost on the host by default. To expose on your LAN, remove
+    # the 127.0.0.1 prefix AND set HOST=0.0.0.0 in your .env.
     ports:
-      - "${PORT:-8080}:8080"
+      - "127.0.0.1:${PORT:-3000}:${PORT:-3000}"
+    environment:
+      # Inside the container the server must listen on all interfaces so the
+      # published port reaches it; host-side binding above keeps it private.
+      - HOST=0.0.0.0
     env_file:
       - .env
     volumes:
       - ./kimi_profile:/app/kimi_profile
+      - ./profiles:/app/profiles
     restart: always

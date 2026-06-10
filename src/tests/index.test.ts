@@ -38,7 +38,8 @@ test('Models endpoint returns k2d6 and fallback models', async () => {
     const body = await res.json();
     assert.strictEqual(body.object, 'list');
     assert.ok(Array.isArray(body.data));
-    assert.ok(body.data.some((m: any) => m.id === 'k2d6'));
+    // Models are now exposed with a provider prefix (e.g. 'kimi/k2d6').
+    assert.ok(body.data.some((m: any) => m.id === 'kimi/k2d6'));
   } finally {
     globalThis.fetch = originalFetch;
   }

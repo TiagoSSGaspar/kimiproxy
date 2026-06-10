@@ -1,6 +1,9 @@
 node_modules/
 dist/
 kimi_profile/
+profiles/
+dom-debug-*.png
+dom-debug-*.html
 .env
 .env.local
 *.log

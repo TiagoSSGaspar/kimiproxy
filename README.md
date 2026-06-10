@@ -1,6 +1,8 @@
 # KimiProxy
 
-Proxy API local compatível com OpenAI que roteia requisições para os modelos do **Kimi (kimi.com)** via automação de navegador com Playwright. Oferece suporte a execução de ferramentas, modo de pensamento (reasoning) e persistência de sessão.
+Proxy API local compatível com OpenAI que roteia requisições para vários assistentes de chat web via automação de navegador com Playwright. Suporta **Kimi (kimi.com)**, **DeepSeek (chat.deepseek.com)** e **Xiaomi MiMo (aistudio.xiaomimimo.com)**, com execução de ferramentas, modo de pensamento (reasoning) e persistência de sessão por provedor.
+
+> **Kimi** usa replay direto da API (rápido). **DeepSeek** e **MiMo** são conduzidos via DOM (o Playwright escreve na caixa de chat e lê a resposta em streaming) — não é preciso reverter o protocolo de cada site.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Hono](https://img.shields.io/badge/Hono-4.0-green)](https://hono.dev/)
@@ -79,18 +81,33 @@ docker-compose up -d
 
 ## ⚙️ Configuração
 
-Crie o arquivo `.env` na raiz do projeto:
+Crie o arquivo `.env` na raiz do projeto (veja `.env.example` para a lista completa):
 
 ```env
 # Porta do servidor (default: 3000)
 PORT=3000
 
-# Chave de API para proteger os endpoints (opcional)
+# Chave de API (Bearer) exigida em todos os /v1/*.
+# O servidor RECUSA arrancar sem ela (use ALLOW_NO_AUTH=true para forçar).
 API_KEY=sua-chave-secreta-aqui
+
+# Bind de rede. Default 127.0.0.1 (só localhost). Use HOST=0.0.0.0 para expor no LAN.
+HOST=127.0.0.1
+
+# Allowlist de origens CORS (separadas por vírgula). Vazio = sem cross-origin. '*' = qualquer.
+CORS_ORIGINS=
 
 # Navegador padrão (chromium, firefox, chrome, edge)
 BROWSER=chromium
 ```
+
+### 🔒 Segurança (defaults)
+
+- **Auth obrigatória**: sem `API_KEY` o servidor não arranca (a menos de `ALLOW_NO_AUTH=true`).
+- **Só localhost**: por defeito escuta em `127.0.0.1`; exposição na rede exige `HOST=0.0.0.0` explícito.
+- **CORS por allowlist**: nenhuma origem cross-origin é permitida por defeito.
+- **Rate limiting + tamanho de body**: `RATE_LIMIT`/`RATE_WINDOW_MS` por IP e `MAX_BODY_BYTES` (10 MiB default).
+- **Perfis isolados por provedor** e fora do git (`kimi_profile/`, `profiles/`).
 
 ---
 
@@ -122,14 +139,35 @@ Available Routes:
 
 ### Autenticação de Sessão (Login)
 
-Realize o login interativo direto no terminal (totalmente invisível e rodando em segundo plano):
+Cada provedor tem o seu próprio login persistente. O comando abre um navegador visível onde fazes login uma vez; a sessão fica guardada no perfil do provedor.
+
 ```bash
-npm run login
-# Ou com browser específico
+npm run login            # Kimi (perfil em kimi_profile/)
+npm run login:deepseek   # DeepSeek (perfil em profiles/deepseek/)
+npm run login:mimo       # MiMo    (perfil em profiles/mimo/)
+# Browser específico:
 npm run login:firefox
+npm run login -- --provider=deepseek --browser=chrome
 ```
 
-Ao executar, o script solicitará de forma interativa no console o seu número de telefone (com DDI e DDD, ex: `5582987185879`) e, em seguida, o código de 6 dígitos recebido via SMS. O fluxo é inteiramente processado de forma silenciosa em segundo plano (headless), injetando o Token de Acesso diretamente na sessão e armazenando os cookies de sessão de forma segura na pasta `kimi_profile/`.
+Depois de ver a interface de chat, fecha a janela ou pressiona `Ctrl+C` no terminal.
+
+---
+
+## 🔀 Seleção de Provedor (prefixo de modelo)
+
+O cliente escolhe o backend pelo **prefixo no nome do modelo**:
+
+| Modelo | Backend |
+|--------|---------|
+| `kimi/k2d6`, `kimi/k2d6-thinking` | Kimi (API replay) |
+| `k2d6`, `k2d6-thinking` (sem prefixo) | Kimi (retrocompatível) |
+| `deepseek/deepseek-chat`, `deepseek/deepseek-reasoner` | DeepSeek (DOM) |
+| `mimo/mimo` | MiMo (DOM) |
+
+`GET /v1/models` lista todos os modelos disponíveis já com prefixo.
+
+> **Calibração dos selectores DOM**: como o layout do DeepSeek/MiMo pode mudar, os selectores em `src/providers/dom/deepseek.ts` e `mimo.ts` são best-effort. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
 
 ---
 
@@ -143,9 +181,7 @@ Content-Type: application/json
 Authorization: Bearer sua-chave
 ```
 
-**Modelos Suportados**:
-- `k2d6-thinking`: Modelo com raciocínio (thinking) habilitado.
-- `k2d6`: Modelo padrão sem o bloco de pensamento.
+**Modelos Suportados**: veja a tabela em [Seleção de Provedor](#-seleção-de-provedor-prefixo-de-modelo). Ex.: `kimi/k2d6-thinking` (raciocínio), `kimi/k2d6` (padrão), `deepseek/deepseek-chat`, `mimo/mimo`.
 
 ---
 
@@ -176,17 +212,25 @@ console.log(completion.choices[0].message.content);
 ```
 kimiproxy/
 ├── src/
-│   ├── index.ts              # Entry point e servidor Hono
+│   ├── index.ts              # Entry point, servidor Hono e segurança
 │   ├── routes/
-│   │   └── chat.ts          # Handler compatível com OpenAI
+│   │   └── chat.ts          # Handler OpenAI (agnóstico ao provedor)
+│   ├── providers/
+│   │   ├── types.ts         # Interface Provider + UnifiedDelta
+│   │   ├── registry.ts      # Routing por prefixo de modelo
+│   │   ├── index.ts         # Registo dos provedores
+│   │   ├── kimi/            # Provedor Kimi (API replay)
+│   │   └── dom/            # Provedores DOM (deepseek.ts, mimo.ts, domProvider.ts)
+│   ├── middleware/
+│   │   └── security.ts      # Rate limit, body size, CORS allowlist
 │   ├── services/
-│   │   ├── kimi.ts          # Integração com a API do Kimi
-│   │   └── playwright.ts    # Automação de navegador
-│   ├── tools/
-│   │   ├── executor.ts      # Execução de ferramentas
-│   │   └── registry.ts      # Registro de tools
-│   └── login.ts             # Script de autenticação
-├── kimi_profile/            # Armazenamento da sessão (gitignored)
+│   │   ├── kimi.ts          # Cliente Connect-protocol do Kimi
+│   │   ├── playwright.ts    # Contexto/headers do Kimi
+│   │   └── browser.ts       # Gestor multi-perfil (provedores DOM)
+│   ├── tools/               # Parsing/execução de tools
+│   └── login.ts             # Login por provedor (--provider=)
+├── kimi_profile/            # Sessão do Kimi (gitignored)
+├── profiles/                # Sessões dos provedores DOM (gitignored)
 ├── Dockerfile                # Configuração Docker
 └── package.json             # Scripts e dependências
 ```
