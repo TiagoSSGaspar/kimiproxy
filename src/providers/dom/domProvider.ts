@@ -3,10 +3,10 @@
  * Project: kimiproxy
  * Generic DOM-driving provider: types a prompt into a site's chat box and
  * streams the assistant's reply by polling the DOM. Used for sites whose
- * private API can't be replayed (DeepSeek's per-message WASM proof-of-work,
- * MiMo's undocumented protocol).
+ * private API can't be replayed (e.g. DeepSeek's per-message WASM
+ * proof-of-work).
  *
- * Selectors are configured per site (deepseek.ts / mimo.ts). Because real
+ * Selectors are configured per site (deepseek.ts / qwen.ts). Because real
  * markup can't be inspected from here, defaults are best-effort and may need
  * calibration after the first manual login. Run with DOM_DEBUG=1 to dump a
  * screenshot + HTML of the page to help adjust selectors.

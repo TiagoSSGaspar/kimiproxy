@@ -2,7 +2,7 @@
 
 Proxy API local compatível com OpenAI que roteia requisições para vários assistentes de chat web via automação de navegador com Playwright. Suporta **Kimi (kimi.com)**, **DeepSeek (chat.deepseek.com)** e **Xiaomi MiMo (aistudio.xiaomimimo.com)**, com execução de ferramentas, modo de pensamento (reasoning) e persistência de sessão por provedor.
 
-> **Kimi** usa replay direto da API (rápido). **DeepSeek** e **MiMo** são conduzidos via DOM (o Playwright escreve na caixa de chat e lê a resposta em streaming) — não é preciso reverter o protocolo de cada site.
+> **Kimi** usa replay direto da API (rápido). **DeepSeek** e **Qwen** são conduzidos via DOM (o Playwright escreve na caixa de chat e lê a resposta em streaming) — não é preciso reverter o protocolo de cada site.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Hono](https://img.shields.io/badge/Hono-4.0-green)](https://hono.dev/)
@@ -145,7 +145,6 @@ Cada provedor tem o seu próprio login persistente. O comando abre um navegador 
 npm run login            # Kimi (perfil em kimi_profile/)
 npm run login:deepseek   # DeepSeek (perfil em profiles/deepseek/)
 npm run login:qwen       # Qwen    (perfil em profiles/qwen/)
-npm run login:mimo       # MiMo    (perfil em profiles/mimo/)
 # Browser específico:
 npm run login:firefox
 npm run login -- --provider=deepseek --browser=chrome
@@ -165,11 +164,10 @@ O cliente escolhe o backend pelo **prefixo no nome do modelo**:
 | `k2d6`, `k2d6-thinking` (sem prefixo) | Kimi (retrocompatível) |
 | `deepseek/deepseek-chat`, `deepseek/deepseek-reasoner` | DeepSeek (DOM) |
 | `qwen/qwen3-max`, `qwen/qwen-plus` | Qwen (DOM) |
-| `mimo/mimo` | MiMo (DOM) |
 
 `GET /v1/models` lista todos os modelos disponíveis já com prefixo.
 
-> **Calibração dos selectores DOM**: como o layout do DeepSeek/MiMo pode mudar, os selectores em `src/providers/dom/deepseek.ts` e `mimo.ts` são best-effort. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
+> **Calibração dos selectores DOM**: como o layout do DeepSeek/Qwen pode mudar, os selectores em `src/providers/dom/deepseek.ts` e `qwen.ts` estão verificados mas podem precisar de ajuste. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
 
 ---
 
@@ -222,7 +220,7 @@ kimiproxy/
 │   │   ├── registry.ts      # Routing por prefixo de modelo
 │   │   ├── index.ts         # Registo dos provedores
 │   │   ├── kimi/            # Provedor Kimi (API replay)
-│   │   └── dom/            # Provedores DOM (deepseek.ts, mimo.ts, domProvider.ts)
+│   │   └── dom/            # Provedores DOM (deepseek.ts, qwen.ts, domProvider.ts)
 │   ├── middleware/
 │   │   └── security.ts      # Rate limit, body size, CORS allowlist
 │   ├── services/

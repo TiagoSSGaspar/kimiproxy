@@ -2,7 +2,7 @@
  * File: browser.ts
  * Project: kimiproxy
  * Multi-profile persistent-browser manager for DOM-driven providers
- * (DeepSeek, MiMo). Kimi keeps its own dedicated context in playwright.ts.
+ * (DeepSeek, Qwen). Kimi keeps its own dedicated context in playwright.ts.
  *
  * Each provider gets an isolated persistent profile under `profiles/<id>` so
  * sessions never collide, plus a per-profile mutex so only one generation
