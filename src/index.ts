@@ -8,10 +8,9 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { bearerAuth } from 'hono/bearer-auth';
 import { chatCompletions } from './routes/chat.ts';
 import { allModels } from './providers/index.ts';
-import { bodyLimit, rateLimit, corsOrigin } from './middleware/security.ts';
+import { bodyLimit, rateLimit, corsOrigin, apiKeyAuth } from './middleware/security.ts';
 import * as dotenv from 'dotenv';
 import { initPlaywright, BrowserType } from './services/playwright.ts';
 import { networkInterfaces } from 'os';
@@ -45,14 +44,9 @@ const RATE_WINDOW_MS = process.env.RATE_WINDOW_MS ? parseInt(process.env.RATE_WI
 app.use('/v1/*', bodyLimit(MAX_BODY_BYTES));
 app.use('/v1/*', rateLimit(RATE_LIMIT, RATE_WINDOW_MS));
 
-// API Key protection middleware
-app.use('/v1/*', async (c, next) => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    return await next();
-  }
-  return bearerAuth({ token: apiKey })(c, next);
-});
+// Optional API key protection (Authorization: Bearer <key> or X-API-Key: <key>).
+// If API_KEY is unset, the proxy is open — fine for localhost use.
+app.use('/v1/*', apiKeyAuth());
 
 // Basic health check
 app.get('/health', (c) => c.json({ status: 'ok' }));
@@ -71,12 +65,10 @@ app.get('/v1/models', (c) => {
 import { fileURLToPath } from 'url';
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  // Security: refuse to start unauthenticated unless explicitly allowed.
-  if (!process.env.API_KEY && process.env.ALLOW_NO_AUTH !== 'true') {
-    console.error('\n❌ Refusing to start without API_KEY.');
-    console.error('   Set API_KEY in your .env to protect the proxy, or set');
-    console.error('   ALLOW_NO_AUTH=true to run an UNAUTHENTICATED server (not recommended).\n');
-    process.exit(1);
+  // API key is OPTIONAL. Without it the proxy is open; the default localhost
+  // bind below keeps that safe for single-user local use.
+  if (!process.env.API_KEY) {
+    console.warn('⚠️  No API_KEY set — proxy is OPEN (no auth). Fine on localhost; set API_KEY to protect it.');
   }
 
   // Bind to localhost by default; only expose on the network when HOST is set

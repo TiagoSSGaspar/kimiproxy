@@ -87,9 +87,9 @@ Crie o arquivo `.env` na raiz do projeto (veja `.env.example` para a lista compl
 # Porta do servidor (default: 3000)
 PORT=3000
 
-# Chave de API (Bearer) exigida em todos os /v1/*.
-# O servidor RECUSA arrancar sem ela (use ALLOW_NO_AUTH=true para forçar).
-API_KEY=sua-chave-secreta-aqui
+# Chave de API OPCIONAL. Sem ela = proxy aberto (ideal para localhost).
+# Se definida, exige Authorization: Bearer <key> OU X-API-Key: <key>.
+# API_KEY=sua-chave-secreta-aqui
 
 # Bind de rede. Default 127.0.0.1 (só localhost). Use HOST=0.0.0.0 para expor no LAN.
 HOST=127.0.0.1
@@ -103,8 +103,8 @@ BROWSER=chromium
 
 ### 🔒 Segurança (defaults)
 
-- **Auth obrigatória**: sem `API_KEY` o servidor não arranca (a menos de `ALLOW_NO_AUTH=true`).
-- **Só localhost**: por defeito escuta em `127.0.0.1`; exposição na rede exige `HOST=0.0.0.0` explícito.
+- **Auth opcional**: sem `API_KEY` o proxy fica aberto (ideal para localhost). Com `API_KEY`, exige `Authorization: Bearer <key>` ou `X-API-Key: <key>`.
+- **Só localhost**: por defeito escuta em `127.0.0.1`; exposição na rede exige `HOST=0.0.0.0` explícito (a tua rede-de-segurança por defeito).
 - **CORS por allowlist**: nenhuma origem cross-origin é permitida por defeito.
 - **Rate limiting + tamanho de body**: `RATE_LIMIT`/`RATE_WINDOW_MS` por IP e `MAX_BODY_BYTES` (10 MiB default).
 - **Perfis isolados por provedor** e fora do git (`kimi_profile/`, `profiles/`).

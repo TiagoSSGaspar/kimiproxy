@@ -11,6 +11,34 @@
  */
 
 import type { Context, Next } from 'hono';
+import { timingSafeEqual } from 'crypto';
+
+/** Constant-time string compare that tolerates differing lengths. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Optional API-key auth. If API_KEY is unset, requests pass through (open —
+ * meant for localhost use). If set, the request must carry the key as either
+ * `Authorization: Bearer <key>` or `X-API-Key: <key>`.
+ */
+export function apiKeyAuth() {
+  return async (c: Context, next: Next) => {
+    const key = process.env.API_KEY;
+    if (!key) return next();
+
+    const auth = c.req.header('authorization') || '';
+    const bearer = /^bearer\s+/i.test(auth) ? auth.replace(/^bearer\s+/i, '').trim() : '';
+    const provided = bearer || c.req.header('x-api-key') || '';
+
+    if (provided && safeEqual(provided, key)) return next();
+    return c.json({ error: 'Unauthorized' }, 401);
+  };
+}
 
 function clientKey(c: Context): string {
   // Behind a proxy these may be spoofable; for a local/self-hosted tool the
