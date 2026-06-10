@@ -46,6 +46,8 @@ export interface DomSiteConfig {
   };
   browserType?: BrowserType;
   headless?: boolean;
+  /** Extra wait (ms) after navigation for the SPA to hydrate/apply auth. */
+  settleMs?: number;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -53,6 +55,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const POLL_MS = 300;
 const MAX_GEN_MS = 180_000;
 const STABLE_TICKS = 10; // ~3s of no new text before we consider it done
+const FIRST_TOKEN_TIMEOUT_MS = 60_000; // patience for the first token (long "thinking" phases)
 
 export class DomProvider implements Provider {
   readonly id: string;
@@ -90,9 +93,10 @@ export class DomProvider implements Provider {
         // (navigating to the site root) to avoid context accumulating. The only
         // exception is a Kimi-style "continue" follow-up, which DOM backends
         // don't emit — so this is effectively always-fresh here.
+        const settle = cfg.settleMs ?? 1200;
         if (opts.prompt !== 'continue') {
           await page.goto(cfg.loginUrl, { waitUntil: 'domcontentloaded' });
-          await sleep(800);
+          await sleep(settle);
         } else if (!page.url().startsWith(cfg.origin)) {
           await page.goto(cfg.loginUrl, { waitUntil: 'domcontentloaded' });
         }
@@ -142,7 +146,12 @@ export class DomProvider implements Provider {
             stable++;
           }
 
-          const settled = !snap.generating && stable >= STABLE_TICKS && (sawText || stable >= STABLE_TICKS * 3);
+          // Before the first token, be patient (thinking phases can be long);
+          // only give up if nothing arrives within FIRST_TOKEN_TIMEOUT_MS.
+          // Once streaming, finish when text stabilises and it's not generating.
+          const settled = sawText
+            ? !snap.generating && stable >= STABLE_TICKS
+            : Date.now() - start > FIRST_TOKEN_TIMEOUT_MS;
           if (settled) break;
         }
 

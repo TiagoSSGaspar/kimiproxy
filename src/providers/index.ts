@@ -13,6 +13,7 @@ import type { BrowserType } from '../services/playwright.ts';
 import { registerProvider } from './registry.ts';
 import { KimiProvider } from './kimi/index.ts';
 import { createDeepSeekProvider } from './dom/deepseek.ts';
+import { createQwenProvider } from './dom/qwen.ts';
 import { createMimoProvider } from './dom/mimo.ts';
 
 const browserType = (process.env.BROWSER as BrowserType) || 'chromium';
@@ -20,6 +21,7 @@ const domHeadless = process.env.DOM_HEADFUL ? false : true;
 
 registerProvider(new KimiProvider());
 registerProvider(createDeepSeekProvider(browserType, domHeadless));
+registerProvider(createQwenProvider(browserType, domHeadless));
 registerProvider(createMimoProvider(browserType, domHeadless));
 
 export { resolveModel, allModels, listProviders, getProvider } from './registry.ts';

@@ -21,6 +21,7 @@ dotenv.config();
 const LOGIN_URLS: Record<string, string> = {
   kimi: 'https://www.kimi.com/',
   deepseek: 'https://chat.deepseek.com/',
+  qwen: 'https://chat.qwen.ai/',
   mimo: 'https://aistudio.xiaomimimo.com/',
 };
 

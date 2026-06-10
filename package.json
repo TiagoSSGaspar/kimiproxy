@@ -13,6 +13,7 @@
     "login:chrome": "npx tsx src/login.ts --browser=chrome",
     "login:edge": "npx tsx src/login.ts --browser=edge",
     "login:deepseek": "npx tsx src/login.ts --provider=deepseek",
+    "login:qwen": "npx tsx src/login.ts --provider=qwen",
     "login:mimo": "npx tsx src/login.ts --provider=mimo",
     "test": "tsx --test src/**/*.test.ts"
   },
