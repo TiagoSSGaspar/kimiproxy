@@ -12,3 +12,8 @@ coverage/
 .cache/
 .kilo
 
+
+# local capture com tokens — nunca commitar
+request_glm.txt
+*.har
+dom-debug-*

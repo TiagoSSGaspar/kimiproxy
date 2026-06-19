@@ -43,6 +43,13 @@ export interface DomSiteConfig {
     reasoning?: string;
     /** Element present only while the model is generating (e.g. stop button). */
     generating?: string;
+    /**
+     * Sub-nodes inside the assistant message whose text must be stripped from
+     * the reply (e.g. a collapsible "thinking" widget rendered inline with the
+     * answer). Their text is removed from `assistantMessage`'s text before it's
+     * emitted; capture the thinking itself via `reasoning`.
+     */
+    exclude?: string;
   };
   browserType?: BrowserType;
   headless?: boolean;
@@ -210,7 +217,15 @@ async function readSnapshot(page: any, cfg: DomSiteConfig): Promise<DomSnapshot>
     (sels: Record<string, string | undefined>) => {
       const aNodes = sels.assistant ? document.querySelectorAll(sels.assistant) : [];
       const aEl = aNodes[aNodes.length - 1] as HTMLElement | undefined;
-      const text = aEl ? (aEl.innerText || '').trim() : '';
+      let text = aEl ? (aEl.innerText || '').trim() : '';
+      // Strip inline "thinking" widget text so it doesn't leak into the answer.
+      if (aEl && sels.exclude) {
+        const exNodes = aEl.querySelectorAll(sels.exclude);
+        for (let i = 0; i < exNodes.length; i++) {
+          const exText = ((exNodes[i] as HTMLElement).innerText || '').trim();
+          if (exText) text = text.split(exText).join('').trim();
+        }
+      }
 
       const rNodes = sels.reasoning ? document.querySelectorAll(sels.reasoning) : [];
       const rEl = rNodes[rNodes.length - 1] as HTMLElement | undefined;
@@ -223,6 +238,7 @@ async function readSnapshot(page: any, cfg: DomSiteConfig): Promise<DomSnapshot>
       assistant: cfg.selectors.assistantMessage,
       reasoning: cfg.selectors.reasoning,
       generating: cfg.selectors.generating,
+      exclude: cfg.selectors.exclude,
     }
   );
 }

@@ -10,6 +10,7 @@
  *   npm run login                 # kimi (default)
  *   npm run login -- --provider=deepseek
  *   npm run login -- --provider=qwen
+ *   npm run login -- --provider=zai
  */
 
 import { initPlaywright, closePlaywright, activePage, BrowserType } from './services/playwright.ts';
@@ -22,6 +23,7 @@ const LOGIN_URLS: Record<string, string> = {
   kimi: 'https://www.kimi.com/',
   deepseek: 'https://chat.deepseek.com/',
   qwen: 'https://chat.qwen.ai/',
+  zai: 'https://chat.z.ai/',
 };
 
 function parseArg(prefix: string): string | undefined {

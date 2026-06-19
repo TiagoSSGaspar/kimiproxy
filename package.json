@@ -14,6 +14,7 @@
     "login:edge": "npx tsx src/login.ts --browser=edge",
     "login:deepseek": "npx tsx src/login.ts --provider=deepseek",
     "login:qwen": "npx tsx src/login.ts --provider=qwen",
+    "login:zai": "npx tsx src/login.ts --provider=zai",
     "test": "tsx --test src/**/*.test.ts"
   },
   "keywords": [],

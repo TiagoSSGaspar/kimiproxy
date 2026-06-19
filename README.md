@@ -145,6 +145,7 @@ Cada provedor tem o seu próprio login persistente. O comando abre um navegador 
 npm run login            # Kimi (perfil em kimi_profile/)
 npm run login:deepseek   # DeepSeek (perfil em profiles/deepseek/)
 npm run login:qwen       # Qwen    (perfil em profiles/qwen/)
+npm run login:zai        # Z.ai    (perfil em profiles/zai/)
 # Browser específico:
 npm run login:firefox
 npm run login -- --provider=deepseek --browser=chrome
@@ -164,10 +165,13 @@ O cliente escolhe o backend pelo **prefixo no nome do modelo**:
 | `k2d6`, `k2d6-thinking` (sem prefixo) | Kimi (retrocompatível) |
 | `deepseek/deepseek-chat`, `deepseek/deepseek-reasoner` | DeepSeek (DOM) |
 | `qwen/qwen3-max`, `qwen/qwen-plus` | Qwen (DOM) |
+| `zai/GLM-5-Turbo`, `zai/glm-5.2`, `zai/GLM-5.1`, `zai/glm-4.7` | Z.ai / GLM (DOM) |
 
 `GET /v1/models` lista todos os modelos disponíveis já com prefixo.
 
-> **Calibração dos selectores DOM**: como o layout do DeepSeek/Qwen pode mudar, os selectores em `src/providers/dom/deepseek.ts` e `qwen.ts` estão verificados mas podem precisar de ajuste. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
+> **Calibração dos selectores DOM**: como o layout do DeepSeek/Qwen/Z.ai pode mudar, os selectores em `src/providers/dom/deepseek.ts`, `qwen.ts` e `zai.ts` estão verificados mas podem precisar de ajuste. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
+>
+> **Z.ai** não pode usar API replay: cada geração é assinada client-side (`x-signature` + `captcha_verify_param`), então driva-se o DOM e deixa-se o app montar a request. Usa o modelo selecionado na UI; a lista de modelos serve para `/v1/models`. Se uma resposta vier vazia, arranca com `DOM_DEBUG=1` para gravar um screenshot + HTML da página e ajustar os selectores.
 
 ---
 
